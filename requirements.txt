@@ -1,0 +1,11 @@
+langchain==0.3.27
+langchain-openai==0.2.14
+langchain-community==0.3.16
+langchain-chroma==0.1.4
+langserve[server]==0.3.1
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+chromadb==0.5.23
+beautifulsoup4==4.12.3
+pypdf==5.1.0
+python-dotenv==1.0.1
