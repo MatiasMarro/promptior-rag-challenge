@@ -2,6 +2,8 @@ import os
 
 from app.config import (
     CHROMA_DIR,
+    CHUNK_OVERLAP,
+    CHUNK_SIZE,
     EMBEDDING_MODEL,
     PDF_PATH,
     WEBSITE_URL
@@ -41,8 +43,8 @@ def build_vectorstore():
 
     # 4. Splitter
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=CHUNK_OVERLAP
     )
 
     chunks = splitter.split_documents(all_docs)
