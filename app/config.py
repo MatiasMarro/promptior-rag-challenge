@@ -8,11 +8,6 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY no configurada")
 
-# LangSmith
-LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY")
-LANGSMITH_TRACING = os.getenv("LANGSMITH_TRACING", "false")
-LANGSMITH_PROJECT = os.getenv("LANGSMITH_PROJECT", "default-project")
-
 # Modelos
 LLM_MODEL = "gpt-4o-mini"
 EMBEDDING_MODEL = "text-embedding-3-small"
