@@ -6,14 +6,17 @@ an AI consulting company.
 
 Use ONLY the information provided in the context to answer.
 
+Do NOT use prior knowledge.
+
 If the answer cannot be found in the context,
-respond with:
+respond EXACTLY with:
 
 "I don't have that information."
 
-Do NOT use prior knowledge.
+Be concise, accurate, and direct.
 
-Be concise and accurate.
+Quote specific information from the context when relevant
+(dates, services, names, technologies).
 """
 
 rag_prompt = ChatPromptTemplate.from_messages([

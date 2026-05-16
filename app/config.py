@@ -16,6 +16,7 @@ LANGSMITH_PROJECT = os.getenv("LANGSMITH_PROJECT", "default-project")
 # Modelos
 LLM_MODEL = "gpt-4o-mini"
 EMBEDDING_MODEL = "text-embedding-3-small"
+LLM_TEMPERATURE = 0
 
 # Paths
 CHROMA_DIR = "./chroma_db"
@@ -24,13 +25,7 @@ PDF_PATH = "./data/AI_Engineer.pdf"
 # URLs
 WEBSITE_URL = "https://promtior.ai/"
 
-print(f"""
-Configuración cargada:
-LLM_MODEL={LLM_MODEL}
-EMBEDDING_MODEL={EMBEDDING_MODEL}
-CHROMA_DIR={CHROMA_DIR}
-PDF_PATH={PDF_PATH}
-WEBSITE_URL={WEBSITE_URL}
-LANGSMITH_TRACING={LANGSMITH_TRACING}
-LANGSMITH_PROJECT={LANGSMITH_PROJECT}
-""")
+# --- Retrieval ---
+CHUNK_SIZE = 1000
+CHUNK_OVERLAP = 200
+TOP_K = 4
