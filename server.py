@@ -30,7 +30,7 @@ def root():
 
 add_routes(
     app,
-    rag_chain,
+    rag_chain.with_types(input_type=str, output_type=str),
     path="/promptior",
 )
 
