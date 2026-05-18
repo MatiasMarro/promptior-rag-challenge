@@ -47,14 +47,14 @@ export default function ChatInput({ onSubmit, isLoading }: Props) {
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           rows={1}
-          placeholder="Escribí tu pregunta…"
+          placeholder="Type your question…"
           className="max-h-40 flex-1 resize-none rounded-2xl border border-brand-border bg-brand-bg-surface px-4 py-2.5 text-brand-text-primary placeholder:text-brand-text-secondary focus:outline-none focus:ring-1 focus:ring-brand-accent"
         />
         <button
           type="button"
           onClick={submit}
           disabled={!canSend}
-          aria-label="Enviar"
+          aria-label="Send"
           className="shrink-0 rounded-2xl bg-brand-accent px-4 py-2.5 font-semibold text-brand-bg-base transition-colors hover:bg-brand-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
         >
           ↑

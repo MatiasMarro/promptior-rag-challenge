@@ -6,9 +6,8 @@ import EmptyState from './components/EmptyState'
 import type { ChatMessage } from './types'
 
 const SUGGESTIONS = [
-  '¿Qué es Promtior?',
-  '¿Qué servicios ofrece?',
-  '¿Con qué partners trabaja?',
+  'What services does Promtior offer?',
+  'When was the company founded?',
 ]
 
 interface InvokeResponse {
@@ -26,9 +25,6 @@ export default function App() {
     setIsLoading(true)
 
     try {
-      // Cada request es independiente: NO se manda historial al backend
-      // (el chain no tiene memoria conversacional). El historial vive solo
-      // en la UI.
       const res = await fetch('/promtior/invoke', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -45,14 +41,14 @@ export default function App() {
         { role: 'assistant', content: data.output },
       ])
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'error desconocido'
+      const message = e instanceof Error ? e.message : 'unknown error'
       setError(message)
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
           content:
-            '⚠️ No pude conectar con el servidor. Intentá de nuevo en un momento.',
+            'Could not reach the server. Please try again in a moment.',
         },
       ])
     } finally {
