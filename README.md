@@ -134,9 +134,16 @@ The rest have working defaults (see `app/config.py`).
 ## Deployment
 
 Deployed on Railway using the multi-stage [Dockerfile](Dockerfile) (Node stage
-builds the SPA, Python stage serves everything). In Railway, set
-**Settings → Build → Builder = Dockerfile**; the container's `CMD` binds
-`$PORT`. See [DEPLOYMENT.md](DEPLOYMENT.md) for the full guide.
+builds the SPA, Python stage serves everything). Railway setup:
+
+- **Settings → Build → Builder = Dockerfile** (Railpack, the default builder,
+  ignores `nixpacks.toml` and never builds the frontend)
+- **Settings → Deploy → Healthcheck Path = `/health`**, timeout `~300s`
+  (first boot rebuilds the vector store since `chroma_db/` is not committed)
+- **Variables → `OPENAI_API_KEY`** (the only env var read by the app)
+
+The container's `CMD` binds `$PORT`; `Procfile`/`nixpacks.toml` are inert
+under the Dockerfile builder.
 
 Production URL: https://promtior-rag-challenge-production.up.railway.app
 
