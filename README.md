@@ -31,11 +31,44 @@ python server.py
 
 Servidor disponible en `http://localhost:8000`.
 
+## Frontend
+
+El frontend es una SPA en **Vite + React 18 + TypeScript + Tailwind**, ubicada
+en `web/`. En producción la misma app de FastAPI sirve el build estático
+(`web/dist`), así que Railway sigue siendo un único servicio. La lógica RAG no
+cambia: el frontend solo consume `POST /promtior/invoke`.
+
+### Desarrollo (dos terminales)
+
+```bash
+# Terminal 1 — backend
+python server.py
+
+# Terminal 2 — frontend (con proxy a :8000)
+cd web
+npm install
+npm run dev          # http://localhost:5173
+```
+
+### Build de producción
+
+```bash
+cd web
+npm run build        # genera web/dist
+```
+
+Con `web/dist` presente, `python server.py` sirve la SPA en `GET /` y mantiene
+intactos `/promtior/*`, `/docs` y `/health`.
+
+> El logo en `web/public/logo.svg` es un **placeholder** y debe ser
+> reemplazado por el isologo oficial de Promtior (mismo nombre de archivo).
+
 ## Endpoints
 
 | Método | Path | Descripción |
 |--------|------|-------------|
-| GET | `/` | Health check |
+| GET | `/` | SPA (frontend React) si `web/dist` existe |
+| GET | `/health` | Health check (JSON de estado) |
 | GET | `/docs` | Swagger UI |
 | GET | `/promptior/playground/` | Playground interactivo de LangServe |
 | POST | `/promptior/invoke` | Ejecutar una query contra el RAG chain |
