@@ -142,8 +142,8 @@ builds the SPA, Python stage serves everything). Railway setup:
   (first boot rebuilds the vector store since `chroma_db/` is not committed)
 - **Variables → `OPENAI_API_KEY`** (the only env var read by the app)
 
-The container's `CMD` binds `$PORT`; `Procfile`/`nixpacks.toml` are inert
-under the Dockerfile builder.
+The container's `CMD` binds `$PORT`. `nixpacks.toml` is inert under the
+Dockerfile builder (kept only as a fallback if the builder is switched).
 
 Production URL: https://promtior-rag-challenge-production.up.railway.app
 

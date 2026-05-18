@@ -73,8 +73,7 @@ Early versions of LangServe had conflicts with Pydantic v2. Solution: pinned `la
 .
 ├── server.py              # FastAPI + LangServe entrypoint + SPA serving
 ├── Dockerfile             # multi-stage build (Node SPA + Python runtime)
-├── nixpacks.toml          # legacy build config (inert with Docker builder)
-├── Procfile               # legacy start command (inert with Docker builder)
+├── nixpacks.toml          # fallback build config (inert with Docker builder)
 ├── requirements.txt
 ├── .env.example
 ├── app/
