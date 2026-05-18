@@ -1,0 +1,16 @@
+[phases.setup]
+nixPkgs = ["nodejs_20", "python311"]
+
+[phases.install]
+cmds = [
+  "pip install -r requirements.txt",
+  "cd web && npm ci"
+]
+
+[phases.build]
+cmds = ["cd web && npm run build"]
+
+# Fallback solo si se usa el builder Nixpacks. Hoy el deploy es por
+# Dockerfile y este archivo queda inerte. Usa $PORT (lo inyecta Railway).
+[start]
+cmd = "uvicorn server:app --host 0.0.0.0 --port $PORT"
