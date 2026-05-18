@@ -60,8 +60,8 @@ npm run build        # genera web/dist
 Con `web/dist` presente, `python server.py` sirve la SPA en `GET /` y mantiene
 intactos `/promtior/*`, `/docs` y `/health`.
 
-> El logo en `web/public/logo.svg` es un **placeholder** y debe ser
-> reemplazado por el isologo oficial de Promtior (mismo nombre de archivo).
+> El logo oficial de Promtior está en `web/public/logo.svg` (se usa en el
+> header, el empty state y el favicon).
 
 ## Endpoints
 
