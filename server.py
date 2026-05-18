@@ -11,7 +11,7 @@ from app.chain import rag_chain
 
 app = FastAPI(
     title="Promtior RAG API",
-    version="1.0",
+    version="1.1.0",
     description="A chatbot that answers questions about Promtior using RAG architecture.",
 )
 

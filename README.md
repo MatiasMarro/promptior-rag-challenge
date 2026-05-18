@@ -166,4 +166,4 @@ work normally.
 
 ---
 
-Version 1.0 — May 2026
+Version 1.1 — May 2026
