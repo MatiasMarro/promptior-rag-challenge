@@ -1,6 +1,6 @@
 # Deployment — Railway
 
-Guía para deployar el proyecto en Railway.
+Guía para deployar el proyecto en Railway usando el `Dockerfile`.
 
 ## Requisitos previos
 
@@ -27,13 +27,22 @@ Guía para deployar el proyecto en Railway.
 
 Railway hace deploy automático en cada push a esa rama.
 
-### 3. Verificar detección del framework
+### 3. Configurar el builder (importante)
 
-Railway detecta proyectos Python por la presencia de `requirements.txt` y `Procfile`. Si el build falla por no encontrar el entrypoint, verificar que el `Procfile` existe y tiene el contenido correcto:
+Railway usa **Railpack** por defecto, que **ignora `nixpacks.toml`** y solo
+detecta Python — por lo que el frontend nunca se buildea. Este proyecto se
+deploya con un **Dockerfile multi-stage** (Node compila la SPA, Python sirve
+todo). Configurar:
 
-```
-web: uvicorn server:app --host 0.0.0.0 --port $PORT
-```
+1. **Settings → Build → Builder** → seleccionar **Dockerfile**
+2. **Custom Build Command** → dejar **vacío** (lo maneja el Dockerfile)
+3. **Custom Start Command** → dejar **vacío** (usa el `CMD` del Dockerfile,
+   que ya bindea `$PORT`)
+4. **Settings → Deploy → Healthcheck Path** → `/health`
+5. **Healthcheck Timeout** → `300` (ver sección Cold start)
+
+> El `Procfile` y `nixpacks.toml` quedan inertes con el builder Dockerfile;
+> no hace falta borrarlos.
 
 ---
 
@@ -41,15 +50,14 @@ web: uvicorn server:app --host 0.0.0.0 --port $PORT
 
 En el dashboard del proyecto, ir a **Variables** y agregar:
 
-| Variable | Requerida | Valor por defecto |
-|----------|-----------|-------------------|
-| `OPENAI_API_KEY` | Sí | — |
-| `LLM_MODEL` | No | `gpt-4o-mini` |
-| `EMBEDDING_MODEL` | No | `text-embedding-3-small` |
-| `TOP_K` | No | `3` |
-| `LLM_TEMPERATURE` | No | `0.7` |
+| Variable | Requerida | Notas |
+|----------|-----------|-------|
+| `OPENAI_API_KEY` | Sí | Única variable leída del entorno |
 
-No commitear variables sensibles al repositorio. Railway las inyecta en el runtime.
+`app/config.py` lee **solo `OPENAI_API_KEY`**. El resto (`LLM_MODEL`,
+`EMBEDDING_MODEL`, `TOP_K=4`, `LLM_TEMPERATURE=0`, paths, URLs) son
+**constantes hardcodeadas** en ese archivo — no se overridean por entorno.
+Sin `OPENAI_API_KEY`, la app tira `ValueError` al importar y no arranca.
 
 ---
 
@@ -58,72 +66,85 @@ No commitear variables sensibles al repositorio. Railway las inyecta en el runti
 El deploy se dispara automáticamente con cada push a la rama configurada. Para hacer un deploy manual:
 
 1. Ir a **Deployments** en el dashboard
-2. Click en **Deploy Now**
+2. Click en **Redeploy**
 
-El estado pasa por `Building` → `Deploying` → `Success`. El tiempo típico es 2-5 minutos.
+El estado pasa por `Building` → `Deploying` → `Success`. Con el Dockerfile el
+build tarda unos minutos (instala deps Python + `npm ci` + `npm run build`).
 
-**URL de producción**: `https://promptior-rag-challenge-production.up.railway.app`
+**URL de producción**: `https://promtior-rag-challenge-production.up.railway.app`
 
 ---
 
 ## Verificar que funciona
 
-Una vez completado el deploy, validar los endpoints:
+Una vez completado el deploy, validar los endpoints (reemplazar `<URL>`):
 
 ```bash
-# Health check
-curl https://promptior-rag-challenge-production.up.railway.app/
+# Frontend (debe devolver el HTML de la SPA, con id="root")
+curl https://<URL>/
 
-# Swagger UI
-curl https://promptior-rag-challenge-production.up.railway.app/docs
+# Health check (JSON de estado)
+curl https://<URL>/health
 
 # Query al RAG
-curl -X POST https://promptior-rag-challenge-production.up.railway.app/promptior/invoke \
+curl -X POST https://<URL>/promtior/invoke \
   -H "Content-Type: application/json" \
-  -d '{"input": "¿Qué es Promtior?"}'
+  -d '{"input": "What is Promtior?"}'
 ```
 
-Los tres deberían retornar `200 OK`.
+`GET /` debe devolver HTML con `<div id="root">` (SPA sirviéndose),
+`/health` un JSON `200`, y `/promtior/invoke` `{"output": "..."}`.
+
+> Nota: `/docs` puede mostrar el Swagger vacío porque `/openapi.json` da 500
+> por un desajuste pre-existente de LangServe/Pydantic. No afecta a
+> `/promtior/invoke` ni al playground.
 
 ### Cold start
 
-En el primer deploy, el servidor tarda entre 30 y 60 segundos adicionales porque construye el vectorstore desde cero (descarga web + PDF, genera embeddings, persiste en ChromaDB). Los deploys posteriores arrancan más rápido porque el índice ya existe.
+`chroma_db/` **no está versionado** (decisión del proyecto). Por eso, en cada
+deploy nuevo (contenedor fresco) el primer arranque reconstruye el vectorstore
+desde cero (descarga web + PDF, genera embeddings, persiste en ChromaDB),
+agregando 30-90 segundos. Dentro de la misma instancia, los reinicios
+posteriores cargan el índice ya persistido.
+
+Por eso conviene subir el **Healthcheck Timeout a ~300s**: si el healthcheck
+expira durante la reconstrucción, Railway marca el deploy como fallido aunque
+el build esté bien.
 
 Secuencia esperada en logs:
 
 ```
-[ingest] Cargando web...
-[ingest] Cargando PDF...
+[ingest] Loading web: https://promtior.ai/
+[ingest] Loading PDF: ./data/AI_Engineer.pdf
 [ingest] Vectorstore built successfully
 INFO: Application startup complete
-INFO: Uvicorn running on http://0.0.0.0:8080
+INFO: Uvicorn running on http://0.0.0.0:<PORT>
 ```
 
 ---
 
 ## Troubleshooting
 
-**Build falla con `BUILD FAILED`**
-- Revisar logs exactos en el dashboard
-- Correr `pip install -r requirements.txt` localmente para descartar errores en el archivo
+**En los Build Logs no aparece `npm`/`vite`**
+- El builder no es Dockerfile. Ir a **Settings → Build → Builder** y
+  seleccionar **Dockerfile**. Redeploy.
 
-**Servidor no inicia**
-- Verificar que `OPENAI_API_KEY` está configurada en Variables
-- Verificar el contenido del `Procfile`
-- Correr `python server.py` localmente para reproducir el error
+**`GET /` devuelve 404 o el JSON de `/health` en vez de la SPA**
+- `web/dist` no quedó en la imagen. Revisar en los Build Logs que la etapa
+  Node corrió `npm run build` y que el `COPY --from=web-build` no falló.
 
-**502 Bad Gateway**
-- Esperar 60 segundos y reintentar (puede ser cold start aún en progreso)
-- Revisar los logs de `[ingest]` por errores de construcción del vectorstore
-- Si persiste, hacer redeploy desde **Deployments** → **Redeploy**
+**Build falla en `pip install` (ej. compilando una wheel)**
+- `python:3.11-slim` no trae toolchain. Cambiar la imagen base del stage
+  runtime del `Dockerfile` a `python:3.11` (full) y redeploy.
 
-**`ValueError: OPENAI_API_KEY no configurada`**
-- Confirmar que la variable existe en Railway Variables y no está vacía
-- Hacer redeploy después de agregar la variable
+**Servidor no inicia / `ValueError: OPENAI_API_KEY no configurada`**
+- Confirmar que `OPENAI_API_KEY` existe en Railway Variables y no está vacía
+- Redeploy después de agregar la variable
 
-**Vectorstore tarda 2-3 minutos en construirse**
-- Es el comportamiento esperado en el primer deploy
-- Los deploys siguientes son más rápidos
+**502 Bad Gateway o "healthcheck failed" tras el deploy**
+- Suele ser el cold start del vectorstore aún en progreso
+- Subir el **Healthcheck Timeout** a ~300s
+- Revisar los logs de `[ingest]` por errores de construcción
 
 ---
 

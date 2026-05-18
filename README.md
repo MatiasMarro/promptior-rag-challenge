@@ -1,20 +1,23 @@
 # Promtior RAG Challenge
 
-Chatbot basado en RAG (Retrieval-Augmented Generation) que responde preguntas sobre Promtior a partir de documentos indexados: el sitio web oficial y un PDF técnico.
+RAG (Retrieval-Augmented Generation) chatbot that answers questions about
+Promtior from indexed documents: the official website and a technical PDF.
+It ships with a custom React frontend served by the same FastAPI app.
 
 ## Stack
 
-- **FastAPI + LangServe**: API REST con endpoints para el chain y playground interactivo
-- **LangChain (LCEL)**: Orquestación del pipeline RAG
-- **OpenAI**: GPT-4o-mini como LLM, text-embedding-3-small para embeddings
-- **ChromaDB**: Vector store persistente en disco
+- **FastAPI + LangServe**: REST API with endpoints for the chain and an interactive playground
+- **LangChain (LCEL)**: RAG pipeline orchestration
+- **OpenAI**: GPT-4o-mini as LLM, text-embedding-3-small for embeddings
+- **ChromaDB**: on-disk persistent vector store
+- **Vite + React 18 + TypeScript + Tailwind**: single-page chat UI
 
-## Instalación local
+## Local setup
 
-Requisitos: Python 3.10+, `OPENAI_API_KEY` disponible.
+Requirements: Python 3.11+, an available `OPENAI_API_KEY`.
 
 ```bash
-git clone https://github.com/your-org/promptior-rag-challenge.git
+git clone https://github.com/MatiasMarro/promptior-rag-challenge.git
 cd promptior-rag-challenge
 
 python -m venv venv
@@ -24,93 +27,100 @@ venv\Scripts\Activate.ps1     # Windows
 pip install -r requirements.txt
 
 cp .env.example .env
-# Completar OPENAI_API_KEY en .env
+# Fill in OPENAI_API_KEY in .env
 
 python server.py
 ```
 
-Servidor disponible en `http://localhost:8000`.
+Server available at `http://localhost:8000`.
+
+> On Windows, if startup fails with `UnicodeEncodeError` (the console codepage
+> can't encode LangServe's banner), run it as
+> `set PYTHONIOENCODING=utf-8 && python server.py`. This does not happen on
+> Linux (Railway).
 
 ## Frontend
 
-El frontend es una SPA en **Vite + React 18 + TypeScript + Tailwind**, ubicada
-en `web/`. En producción la misma app de FastAPI sirve el build estático
-(`web/dist`), así que Railway sigue siendo un único servicio. La lógica RAG no
-cambia: el frontend solo consume `POST /promtior/invoke`.
+The frontend is a SPA built with **Vite + React 18 + TypeScript + Tailwind**,
+located in `web/`. In production the same FastAPI app serves the static build
+(`web/dist`), so Railway stays a single service. The RAG logic is untouched:
+the frontend only consumes `POST /promtior/invoke`.
 
-### Desarrollo (dos terminales)
+### Development (two terminals)
 
 ```bash
 # Terminal 1 — backend
 python server.py
 
-# Terminal 2 — frontend (con proxy a :8000)
+# Terminal 2 — frontend (proxied to :8000)
 cd web
 npm install
 npm run dev          # http://localhost:5173
 ```
 
-### Build de producción
+### Production build
 
 ```bash
 cd web
-npm run build        # genera web/dist
+npm run build        # generates web/dist
 ```
 
-Con `web/dist` presente, `python server.py` sirve la SPA en `GET /` y mantiene
-intactos `/promtior/*`, `/docs` y `/health`.
+With `web/dist` present, `python server.py` serves the SPA at `GET /` while
+keeping `/promtior/*`, `/docs` and `/health` intact.
 
-> El logo oficial de Promtior está en `web/public/logo.svg` (se usa en el
-> header, el empty state y el favicon).
+> The official Promtior logo lives at `web/public/logo.svg` (used in the
+> header, the empty state and the favicon).
 
 ## Endpoints
 
-| Método | Path | Descripción |
+| Method | Path | Description |
 |--------|------|-------------|
-| GET | `/` | SPA (frontend React) si `web/dist` existe |
-| GET | `/health` | Health check (JSON de estado) |
+| GET | `/` | SPA (React frontend) when `web/dist` exists |
+| GET | `/health` | Health check (status JSON) |
 | GET | `/docs` | Swagger UI |
-| GET | `/promptior/playground/` | Playground interactivo de LangServe |
-| POST | `/promptior/invoke` | Ejecutar una query contra el RAG chain |
+| GET | `/promtior/playground/` | LangServe interactive playground |
+| POST | `/promtior/invoke` | Run a query against the RAG chain |
 
-### Ejemplo de uso
+### Usage example
 
 ```bash
-curl -X POST http://localhost:8000/promptior/invoke \
+curl -X POST http://localhost:8000/promtior/invoke \
   -H "Content-Type: application/json" \
-  -d '{"input": "¿Qué es Promtior?"}'
+  -d '{"input": "What is Promtior?"}'
 ```
 
 ```json
-{"output": "Promtior es una empresa de consultoría tecnológica..."}
+{"output": "Promtior is a technology consulting company..."}
 ```
 
-## Arquitectura
+## Architecture
 
 ```
 server.py
     └── app/chain.py          <- RAG chain (LCEL)
-        ├── app/config.py     <- Variables de entorno
+        ├── app/config.py     <- Configuration
         ├── app/prompts.py    <- Prompt template
-        └── app/ingest.py     <- Carga y vectorización de documentos
+        └── app/ingest.py     <- Document loading and vectorization
             ├── Web: promtior.ai
             ├── PDF: data/AI_Engineer.pdf
-            └── Persistencia: ./chroma_db/
+            └── Persistence: ./chroma_db/
 ```
 
-El vectorstore se construye en el primer arranque. Los siguientes usan el índice ya persistido.
+The vector store is built on first startup; subsequent boots reuse the
+persisted index. `chroma_db/` is intentionally not committed, so a fresh
+deploy rebuilds it on the first boot.
 
-## Configuración
+## Configuration
 
-Ver [.env.example](.env.example) para todas las variables disponibles. Las obligatorias son:
+See [.env.example](.env.example). The only required variable is:
 
 ```env
 OPENAI_API_KEY=sk-...
 ```
 
-El resto tiene valores por defecto funcionales.
+The rest have working defaults (see `app/config.py`).
 
-## Dependencias principales
+## Main dependencies
 
 | Package | Version |
 |---------|---------|
@@ -123,22 +133,30 @@ El resto tiene valores por defecto funcionales.
 
 ## Deployment
 
-El proyecto está configurado para Railway. Ver [DEPLOYMENT.md](DEPLOYMENT.md) para la guía completa.
+Deployed on Railway using the multi-stage [Dockerfile](Dockerfile) (Node stage
+builds the SPA, Python stage serves everything). In Railway, set
+**Settings → Build → Builder = Dockerfile**; the container's `CMD` binds
+`$PORT`. See [DEPLOYMENT.md](DEPLOYMENT.md) for the full guide.
 
-URL de producción: https://promptior-rag-challenge-production.up.railway.app
+Production URL: https://promtior-rag-challenge-production.up.railway.app
 
 ## Troubleshooting
 
 **`ValueError: OPENAI_API_KEY no configurada`**
-Agregar la variable en `.env` (local) o en Railway Variables (producción).
+Add the variable to `.env` (local) or Railway Variables (production).
 
-**502 Bad Gateway en Railway**
-Esperar 30-60 segundos luego del deploy. El primer arranque tarda por la construcción del vectorstore. Si persiste, revisar los logs desde el dashboard.
+**502 Bad Gateway / slow first request on Railway**
+Wait 30–90 seconds after a deploy: the first boot rebuilds the vector store
+(`chroma_db/` is not committed). If it persists, check the deploy logs.
 
-**Vectorstore corrupto o vacío**
-Eliminar `./chroma_db/` y reiniciar. Se reconstruye automáticamente.
+**Corrupt or empty vector store**
+Delete `./chroma_db/` and restart. It is rebuilt automatically.
+
+**Swagger UI at `/docs` renders empty**
+Known pre-existing issue: `/openapi.json` can 500 due to a LangServe/Pydantic
+schema-generation mismatch. `/promtior/invoke` and `/promtior/playground/`
+work normally.
 
 ---
 
-Versión 1.0 — Mayo 2026
-
+Version 1.0 — May 2026
