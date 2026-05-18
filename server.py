@@ -31,7 +31,7 @@ def root():
 add_routes(
     app,
     rag_chain.with_types(input_type=str, output_type=str),
-    path="/promptior",
+    path="/promtior",
 )
 
 if __name__ == "__main__":
