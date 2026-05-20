@@ -73,7 +73,6 @@ keeping `/promtior/*`, `/docs` and `/health` intact.
 |--------|------|-------------|
 | GET | `/` | SPA (React frontend) when `web/dist` exists |
 | GET | `/health` | Health check (status JSON) |
-| GET | `/docs` | Swagger UI |
 | GET | `/promtior/playground/` | LangServe interactive playground |
 | POST | `/promtior/invoke` | Run a query against the RAG chain |
 
