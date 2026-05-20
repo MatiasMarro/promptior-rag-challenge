@@ -34,10 +34,6 @@ python server.py
 
 Server available at `http://localhost:8000`.
 
-> On Windows, if startup fails with `UnicodeEncodeError` (the console codepage
-> can't encode LangServe's banner), run it as
-> `set PYTHONIOENCODING=utf-8 && python server.py`. This does not happen on
-> Linux (Railway).
 
 ## Frontend
 
