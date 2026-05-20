@@ -154,11 +154,6 @@ Wait 30–90 seconds after a deploy: the first boot rebuilds the vector store
 **Corrupt or empty vector store**
 Delete `./chroma_db/` and restart. It is rebuilt automatically.
 
-**Swagger UI at `/docs` renders empty**
-Known pre-existing issue: `/openapi.json` can 500 due to a LangServe/Pydantic
-schema-generation mismatch. `/promtior/invoke` and `/promtior/playground/`
-work normally.
-
 ---
 
 Version 1.1 — May 2026
